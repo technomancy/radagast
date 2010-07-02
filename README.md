@@ -18,7 +18,11 @@ dev-dependency in your project.clj:
 
 Then you can use it:
 
-    lein deps && lein radagast
+    lein deps && lein radagast my.test.namespace my.other.tests
+
+You can also set the <tt>:radagast/ns-whitelist</tt> key in
+project.clj to a regex to cause it to skip coverage checks for all
+functions in namespaces that match.
 
 ## License
 
