@@ -3,8 +3,7 @@
 
 (defn radagast [project & nses]
   (eval-in-project
-   project `(do (require '~'radagast.coverage)
-                (binding [radagast.coverage/*ns-must-match*
-                          ~(:radagast/ns-whitelist project)]
-                  (@(ns-resolve '~'radagast.coverage '~'coverage)
-                   ~@nses)))))
+   project `(binding [radagast.coverage/*ns-must-match*
+                      ~(:radagast/ns-whitelist project)]
+              (radagast.coverage/coverage ~@nses))
+   nil nil '(require 'radagast.coverage)))
