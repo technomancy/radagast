@@ -1,7 +1,7 @@
 (ns radagast.coverage
   (:require [clojure.test]))
 
-(def *ns-must-match* nil)
+(def ^{:dynamic true} *ns-must-match* nil)
 
 (defn skip-ns? [n]
   (or (re-find #"(^clojure\.|radagast)" (str (.getName n)))
