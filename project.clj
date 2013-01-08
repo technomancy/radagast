@@ -1,2 +1,2 @@
-(defproject radagast "1.1.1"
+(defproject radagast "1.2.1"
   :description "Simplistic test coverage.")
