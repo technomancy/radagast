@@ -24,7 +24,7 @@
   (for [n nses [_ v] (ns-publics n) :when (::untested? (meta v))] v))
 
 (defn -main [whitelist & test-nses]
-  (binding [*ns-must-match* whitelist]
+  (binding [*ns-must-match* (re-pattern whitelist)]
     (doseq [n test-nses]
       (require (symbol n)))
 
