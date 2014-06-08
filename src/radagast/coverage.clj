@@ -2,6 +2,7 @@
   (:require [clojure.test]))
 
 (def ^{:dynamic true} *ns-must-match* nil)
+(def ^{:dynamic true} *out-file* nil)
 
 (defn skip-ns? [n]
   (or (re-find #"(^clojure\.|radagast)" (str (.getName n)))
@@ -27,8 +28,15 @@
   (doseq [n test-nses] (require (symbol n)))
   (let [impl-nses (remove skip-ns? (all-ns))]
     (instrument-nses impl-nses)
+
     (with-out-str
       (apply clojure.test/run-tests (map symbol test-nses)))
-    (println "Missing test coverage for:")
-    (doseq [v (uncovered impl-nses)]
-      (println v))))
+
+    (if-let [uncovered-symbols (uncovered impl-nses)]
+      (do (println "Missing test coverage for:")
+          (doseq [v uncovered-symbols]
+            (println v))
+          (when *out-file*
+            (spit *out-file* 1)))
+      (when *out-file*
+        (spit *out-file* 0)))))
