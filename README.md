@@ -15,7 +15,7 @@ For now it only works as a Leiningen plugin. Include it as a
 dev-dependency in your project.clj:
 
 ```clojure
-:profiles {:dev {:dependencies [[radagast "1.2."]]}}
+:profiles {:dev {:dependencies [[radagast "1.2.1"]]}}
 ```
 
 Then you can use it:
