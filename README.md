@@ -14,7 +14,9 @@ rely on Radagast to tell you if your tests are good!
 For now it only works as a Leiningen plugin. Include it as a
 dev-dependency in your project.clj:
 
-    :dev-dependencies [[radagast "1.1.1"]]
+```clojure
+:profiles {:dev {:dependencies [[radagast "1.2."]]}}
+```
 
 Then you can use it:
 
