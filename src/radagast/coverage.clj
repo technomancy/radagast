@@ -2,7 +2,6 @@
   (:require [clojure.test]))
 
 (def ^{:dynamic true} *ns-must-match* nil)
-(def ^{:dynamic true} *out-file* nil)
 
 (defn skip-ns? [n]
   (or (re-find #"(^clojure\.|radagast)" (str (.getName n)))
@@ -24,19 +23,20 @@
 (defn uncovered [nses]
   (for [n nses [_ v] (ns-publics n) :when (::untested? (meta v))] v))
 
-(defn coverage [& test-nses]
-  (doseq [n test-nses] (require (symbol n)))
-  (let [impl-nses (remove skip-ns? (all-ns))]
-    (instrument-nses impl-nses)
+(defn -main [whitelist & test-nses]
+  (binding [*ns-must-match* whitelist]
+    (doseq [n test-nses]
+      (require (symbol n)))
 
-    (with-out-str
-      (apply clojure.test/run-tests (map symbol test-nses)))
+    (let [impl-nses (remove skip-ns? (all-ns))]
+      (instrument-nses impl-nses)
 
-    (if-let [uncovered-symbols (uncovered impl-nses)]
-      (do (println "Missing test coverage for:")
-          (doseq [v uncovered-symbols]
-            (println v))
-          (when *out-file*
-            (spit *out-file* 1)))
-      (when *out-file*
-        (spit *out-file* 0)))))
+      (with-out-str
+        (apply clojure.test/run-tests (map symbol test-nses)))
+
+      (if-let [uncovered-symbols (uncovered impl-nses)]
+        (do (println "Missing test coverage for:")
+            (doseq [v uncovered-symbols]
+              (println v))
+            (System/exit 1))
+        (System/exit 0)))))
