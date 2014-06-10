@@ -1,48 +1,94 @@
 (ns radagast.coverage
   (:require [clojure.test]))
 
-(def ^{:dynamic true} *ns-must-match* nil)
 
-(defn skip-ns? [n]
+(defn skip-ns?
+  [pattern n]
   (let [name (str (.getName n))]
     (or (re-find #"(^clojure\.|radagast)" name)
-      (and *ns-must-match*
-           (not (re-find *ns-must-match* name)))))
+        (not (re-find pattern name)))))
 
-(defn instrument [f v]
+
+(defn- instrument!
+  [f v]
   (fn [& args]
     (alter-meta! v assoc ::untested? false)
     (apply f args)))
 
-(defn instrument-nses [nses]
-  (doseq [n nses [_ v] (ns-publics n)]
-    (when (and (.isBound v)
-               (fn? @v)
-               (not (:macro (meta v)))
-               (not (:test (meta v))))
-      (alter-meta! v assoc ::untested? true)
-      (alter-var-root v instrument v))))
 
-(defn uncovered [nses]
+(defn- safe-to-instrument?
+  [v]
+  (and (.isBound v)
+       (fn? @v)
+       (not (:macro (meta v)))
+       (not (:test (meta v)))))
+
+
+(defn instrument-var! [v]
+  (when (safe-to-instrument? v)
+    (alter-meta! v assoc ::untested? true)
+    (alter-meta! v assoc ::original @v)
+    (alter-var-root v instrument! v)))
+
+
+(defn uninstrument-var! [v]
+  (when (safe-to-instrument? v)
+    (let [root (::original (meta v))]
+      (assert root "No root binding to restore!")
+      (alter-meta! v dissoc ::untested?)
+      (alter-meta! v dissoc ::original)
+      (alter-var-root v (constantly root)))))
+
+
+(defn doto-ns [f ns]
+  (doseq [[_ v] (ns-publics ns)]
+    (f v)))
+
+
+(defn instrument-ns! [& nss]
+  (doseq [ns nss]
+    (doto-ns instrument-var! ns)))
+
+
+(defn uninstrument-ns! [& nss]
+  (doseq [ns nss]
+    (doto-ns uninstrument-var! ns)))
+
+
+(defn uncovered-vars [nses]
   (for [n nses [_ v] (ns-publics n)
         :when (::untested? (meta v))]
     v))
 
-(defn -main [whitelist & test-nses]
-  (binding [*ns-must-match* (re-pattern whitelist)]
+
+(defn evaluate-test-coverage
+  [pattern test-nses]
+  (let [test-nses (map symbol test-nses)]
     (doseq [n test-nses]
-      (require (symbol n)))
+      (require n))
 
-    (let [impl-nses (->> (all-ns)
-                         (remove skip-ns?))]
-      (instrument-nses impl-nses)
+    (let [nses (->> (all-ns)
+                    (remove skip-ns? pattern))]
+      (try
+        (doseq [ns nses]
+          (instrument-ns! ns))
 
-      (with-out-str
-        (apply clojure.test/run-tests (map symbol test-nses)))
+        (with-out-str
+          (apply clojure.test/run-tests
+                 test-nses))
 
-      (if-let [uncovered-symbols (uncovered impl-nses)]
-        (do (println "Missing test coverage for:")
-            (doseq [v uncovered-symbols]
-              (println v))
-            (System/exit 1))
-        (System/exit 0)))))
+        (uncovered-vars test-nses)
+
+        (finally
+          (doseq [ns nses]
+            (uninstrument-ns! ns)))))))
+
+
+(defn -main [whitelist & test-nses]
+  (let [pattern (re-pattern whitelist)]
+    (if-let [vars (evaluate-test-coverage pattern test-nses)]
+      (do (println "Missing test coverage for:")
+          (doseq [v vars]
+            (println v))
+          (System/exit 1))
+      (System/exit 0))))
