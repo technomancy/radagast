@@ -15,7 +15,7 @@ For now it only works as a Leiningen plugin. Include it as a
 dev dependency in your project.clj:
 
 ```clj
-:profiles {:dev {:dependencies [[radagast "2.0.0"]]}}
+:profiles {:dev {:dependencies [[radagast "2.0.1"]]}}
 ```
 
 Then you can use it:
