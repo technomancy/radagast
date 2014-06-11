@@ -67,8 +67,7 @@
     (doseq [n test-nses]
       (require n))
 
-    (let [nses (->> (all-ns)
-                    (remove skip-ns? pattern))]
+    (let [nses (remove (partial skip-ns? pattern) (all-ns))]
       (try
         (doseq [ns nses]
           (instrument-ns! ns))
