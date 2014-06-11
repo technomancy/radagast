@@ -84,9 +84,10 @@
 
 (defn -main [whitelist & test-nses]
   (let [pattern (re-pattern whitelist)]
-    (if-let [vars (evaluate-test-coverage pattern test-nses)]
-      (do (println "Missing test coverage for:")
-          (doseq [v vars]
-            (println v))
-          (System/exit 1))
-      (System/exit 0))))
+    (when-let [vars (seq (evaluate-test-coverage pattern test-nses))]
+      (println "Missing test coverage for:")
+      (doseq [v vars]
+        (println v))
+      (System/exit 1))
+    (println "All covered.")
+    (System/exit 0)))
