@@ -80,8 +80,7 @@
         (uncovered-vars test-nses)
 
         (finally
-          (doseq [ns nses]
-            (uninstrument-ns! ns)))))))
+          (mapv uninstrument-ns! nses))))))
 
 
 (defn -main [whitelist & test-nses]
