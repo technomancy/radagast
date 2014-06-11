@@ -12,22 +12,25 @@ rely on Radagast to tell you if your tests are good!
 ## Usage
 
 For now it only works as a Leiningen plugin. Include it as a
-dev-dependency in your project.clj:
+dev dependency in your project.clj:
 
-```clojure
-:profiles {:dev {:dependencies [[radagast "1.2."]]}}
+```clj
+:profiles {:dev {:dependencies [[radagast "2.0.0"]]}}
 ```
 
 Then you can use it:
 
-    lein deps && lein radagast my.test.namespace my.other.tests
+    $ lein run -m radagast.coverage "whitelist.*pattern" ns.one [ns.two ...]
 
-You can also set the <tt>:radagast/ns-whitelist</tt> key in
-project.clj to a regex to cause it to skip coverage checks for all
-functions in namespaces that match.
+You can also define an alias to run it as `lein radagast ...` where it
+will take test namespaces as arguments.
+
+```clj
+:aliases {"radagast" ["run" "-m" "radagast.coverage" "whitelist.pattern"]}
+```
 
 ## License
 
-Copyright (C) 2010 Phil Hagelberg
+Copyright © 2010-2014 Phil Hagelberg and contributors
 
 Distributed under the Eclipse Public License, the same as Clojure.
